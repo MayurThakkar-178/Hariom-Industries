@@ -8,15 +8,15 @@ import time
 # Page settings
 st.set_page_config(page_title="Office Space HTML Email Sender", layout="centered")
 st.title("🏢 Fully Furnished Office Space – HTML Email Broadcaster")
-st.write("Upload an Excel file of contacts and send a professionally styled HTML flyer.")
+st.write("Upload a CSV file of contacts and send a professionally styled HTML flyer.")
 
-# Upload Excel contacts
-uploaded_file = st.file_uploader("📂 Upload Excel File (.xlsx)", type=["xlsx"])
+# Upload CSV contacts
+uploaded_file = st.file_uploader("📂 Upload CSV File (.csv)", type=["csv"])
 
 if uploaded_file:
-    # Read the contact list
-    df = pd.read_excel(uploaded_file)
-    df.columns = df.columns.str.strip().str.title()
+    # Read the contact list from CSV
+    df = pd.read_csv(uploaded_file)
+    df.columns = df.columns.str.strip().str.title()  # Normalize column names
 
     st.subheader("📋 Contacts Preview")
     st.dataframe(df)
