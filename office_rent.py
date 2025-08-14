@@ -16,6 +16,7 @@ uploaded_file = st.file_uploader("📂 Upload Excel File (.xlsx)", type=["xlsx"]
 if uploaded_file:
     # Read the contact list
     df = pd.read_excel(uploaded_file)
+    df.columns = df.columns.str.strip().str.title()
 
     st.subheader("📋 Contacts Preview")
     st.dataframe(df)
@@ -64,7 +65,7 @@ if uploaded_file:
             <b>Manoj Thakkar</b> – +91 98253 20376
         </p>
 
-        <p style="margin-top:30px;">Best regards,<br>Your Real Estate Team</p>
+        <p style="margin-top:30px;">Best regards,<br>Hariom Group</p>
     </body>
     </html>
     """
