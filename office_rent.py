@@ -1,106 +1,144 @@
 import streamlit as st
 import pandas as pd
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-import time
 
-# Page settings
-st.set_page_config(page_title="Office Space HTML Email Sender", layout="centered")
-st.title("🏢 Fully Furnished Office Space – HTML Email Broadcaster")
-st.write("Upload a CSV file of contacts and send a professionally styled HTML flyer.")
+# ---- Page Config ----
+st.set_page_config(page_title="Hariom Industries Email Tool", page_icon="📩", layout="centered")
 
-# Upload CSV contacts
-uploaded_file = st.file_uploader("📂 Upload CSV File (.csv)", type=["csv"])
+st.title("📩 Hariom Industries - Email Template Generator")
+st.write("Upload a CSV of agents/traders (with columns: `Name`, `Email`) to generate emails.")
+
+# ---- File Upload ----
+uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
 
 if uploaded_file:
-    # Read the contact list from CSV
     df = pd.read_csv(uploaded_file)
-    df.columns = df.columns.str.strip().str.title()  # Normalize column names
+    st.success(f"CSV Loaded: {len(df)} contacts found ✅")
+    st.dataframe(df.head())
 
-    st.subheader("📋 Contacts Preview")
-    st.dataframe(df)
+    # HTML Email Template
+    def generate_email(name, email):
+        html = f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Hariom Industries – Export Email</title>
+          <style>
+            body {{
+              margin: 0;
+              padding: 0;
+              background: #f4f6f8;
+              font-family: Arial, Helvetica, sans-serif;
+            }}
+            .container {{
+              max-width: 640px;
+              margin: 20px auto;
+              background: #ffffff;
+              border-radius: 16px;
+              overflow: hidden;
+              box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+            }}
+            .banner img {{
+              width: 100%;
+              height: auto;
+              display: block;
+            }}
+            .content {{
+              padding: 28px;
+            }}
+            p {{
+              margin: 8px 0;
+              font-size: 15px;
+              color: #555;
+              line-height: 1.6;
+            }}
+            .card {{
+              background: #fafafa;
+              border: 1px solid #ececec;
+              border-radius: 12px;
+              padding: 16px 18px;
+              margin-top: 20px;
+            }}
+            .card h3 {{
+              margin: 0 0 8px 0;
+              font-size: 18px;
+              color: #222;
+            }}
+            .card ul {{
+              margin: 8px 0;
+              padding-left: 20px;
+              font-size: 14px;
+              color: #333;
+            }}
+            .btn {{
+              display: inline-block;
+              text-decoration: none;
+              font-weight: 600;
+              padding: 12px 18px;
+              margin-top: 24px;
+              border-radius: 8px;
+              background: #0b8457;
+              color: #ffffff;
+            }}
+            hr {{
+              border: none;
+              height: 1px;
+              background: #eee;
+              margin: 24px 0;
+            }}
+            .footer {{
+              font-size: 12px;
+              color: #777;
+              padding: 0 28px 24px 28px;
+              line-height: 1.5;
+            }}
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="banner">
+              <img src="https://via.placeholder.com/1200x400.png?text=Hariom+Industries+Cotton+Exports" alt="Hariom Industries">
+            </div>
+            <div class="content">
+              <p>
+                Dear {name},
+              </p>
+              <p>
+                Greetings from <strong>Hariom Industries</strong>, a Gujarat-based cotton ginning company.  
+                We specialize in <strong>Shankar-6 cotton bales</strong> and byproducts including cottonseed, cottonseed cake, lint waste, and seed oil.
+              </p>
+              <p>
+                In addition to Shankar-6, we also process and supply <strong>Kalyan 797 cotton (variety 797)</strong>, ensuring diverse options to meet the specific needs of our buyers.
+              </p>
+              <div class="card">
+                <h3>What we can supply</h3>
+                <ul>
+                  <li>Shankar-6 Cotton Bales – press-packed, contamination-controlled</li>
+                  <li>Kalyan 797 Cotton – widely used in local & export markets</li>
+                  <li>Cottonseed – suitable for oil extraction</li>
+                  <li>Cottonseed Cake – protein-rich cattle feed</li>
+                  <li>Lint / Cotton Waste – for open-end spinning & recycling</li>
+                </ul>
+              </div>
+              <a href="mailto:hariomindustries5559@gmail.com?subject=Request%20for%20Cotton%20Specs%20and%20Prices&body=Hello%20Hariom%20Industries%2C%0D%0A%0D%0AI%20am%20interested%20in%20your%20cotton%20products.%20Please%20share%20detailed%20specifications%20and%20pricing.%0D%0A%0D%0ACompany%20Name%3A%20%5BEnter%20Here%5D%0D%0AContact%20Person%3A%20%5BEnter%20Here%5D%0D%0AContact%20Number%3A%20%5BEnter%20Here%5D%0D%0A%0D%0ARegards%2C" 
+                 class="btn">Request Specs & Prices</a>
+              <hr>
+              <div class="footer">
+                Hariom Industries • Gujarat, India<br>
+                +91-XXXXXXXXXX • hariomindustries5559@gmail.com
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+        """
+        return html
 
-    # Gmail credentials
-    st.subheader("✉️ Gmail Sender Details")
-    sender_email = st.text_input("Sender Gmail", placeholder="example@gmail.com")
-    app_password = st.text_input("App Password (Gmail App Password)", type="password")
+    # ---- Show Emails ----
+    for idx, row in df.iterrows():
+        name = row["Name"]
+        email = row["Email"]
 
-    # Email subject
-    subject = "📢 Fully Furnished Office Space for Rent – CG Road, Ahmedabad"
-
-    # HTML Email Body Template
-    office_html_message = """
-    <html>
-    <body style="font-family: Arial, sans-serif; color: #333;">
-        <p>Dear {name},</p>
-        
-        <h2 style="color:#d35400;">📢 Fully Furnished Office Space for Rent – CG Road, Ahmedabad</h2>
-        
-        <p><b>📍 Location:</b> Kalapurnam Complex, Near Municipal Market, CG Road, Navrangpura, Ahmedabad</p>
-        <p><b>📌 Google Map:</b> <a href="https://maps.app.goo.gl/zfzrn4cP2dGbPpk46?g_st=ipc" style="color:#2980b9;">View Location</a></p>
-        <p><b>📐 Area:</b> 2632 sq.ft</p>
-        <p><b>💰 Rent:</b> ₹48/sq.ft (Approx. ₹1,26,336 per month)</p>
-        
-        <h3 style="color:#27ae60;">🏢 Office Features:</h3>
-        <ul>
-            <li>Boss cabin</li>
-            <li>Manager cabin</li>
-            <li>Conference room</li>
-            <li>Reception area</li>
-            <li>50–70 workstation capacity</li>
-            <li>Pantry</li>
-            <li>8–10 Air Conditioning units</li>
-            <li>Sofas & Chairs</li>
-            <li>Separate male & female washrooms</li>
-        </ul>
-
-        <p>✅ Ready-to-move-in<br>
-           ✅ Prime Commercial Location<br>
-           ✅ Ideal for Corporate, IT, or Service-based Companies</p>
-
-        <h3 style="color:#c0392b;">📞 Contact:</h3>
-        <p>
-            <b>Prakash Thakkar</b> – +91 98790 92111<br>
-            <b>Manoj Thakkar</b> – +91 98253 20376
-        </p>
-
-        <p style="margin-top:30px;">Best regards,<br>Hariom Group</p>
-    </body>
-    </html>
-    """
-
-    # Send Emails Button
-    if st.button("📬 Send HTML Emails"):
-        if not sender_email or not app_password:
-            st.error("Please provide your Gmail and App Password.")
-        else:
-            sent_count = 0
-            for _, row in df.iterrows():
-                name = row.get("Name", "")
-                recipient = row.get("Email", "")
-
-                if not recipient:
-                    continue  # skip empty emails
-
-                # Personalize and prepare email
-                final_html = office_html_message.format(name=name)
-                msg = MIMEMultipart("alternative")
-                msg['From'] = sender_email
-                msg['To'] = recipient
-                msg['Subject'] = subject
-                msg.attach(MIMEText(final_html, "html"))
-
-                try:
-                    with smtplib.SMTP("smtp.gmail.com", 587) as server:
-                        server.starttls()
-                        server.login(sender_email, app_password)
-                        server.sendmail(sender_email, recipient, msg.as_string())
-                        sent_count += 1
-                        st.success(f"✅ HTML Email Sent to {name} <{recipient}>")
-                        time.sleep(1)  # delay to avoid Gmail throttling
-                except Exception as e:
-                    st.error(f"❌ Failed to send to {recipient}: {e}")
-                    time.sleep(1)
-
-            st.info(f"📧 Total HTML Emails Sent: {sent_count}")
+        st.markdown(f"### ✉️ Email Preview for **{name}** ({email})")
+        st.components.v1.html(generate_email(name, email), height=800, scrolling=True)
