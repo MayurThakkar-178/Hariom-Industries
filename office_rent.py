@@ -8,36 +8,37 @@ from email.mime.text import MIMEText
 st.set_page_config(page_title="Hariom Industries Email Tool", page_icon="📩", layout="centered")
 
 st.title("📩 Hariom Industries - Bulk Email Sender")
-st.write("Upload a CSV with trader/agent emails (with column: `Email`) to send outreach emails.")
+st.write("Upload a CSV with columns: `Email`, `Name`, `Company` to send personalized outreach emails.")
 
-# ---- File Upload ----
-uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
+# ---- Email Template (Personalized) ----
+def generate_email(name=None, company=None):
+    greeting = "Hello"
+    if name and company:
+        greeting = f"Hello {name} from {company},"
+    elif name:
+        greeting = f"Hello {name},"
+    elif company:
+        greeting = f"Hello team at {company},"
 
-# ---- Email Template (Generic) ----
-def generate_email():
-    html = """
+    html = f"""
     <!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="UTF-8">
       <title>Hariom Industries – Cotton Exports</title>
       <style>
-        body { font-family: Arial, sans-serif; background: #f4f6f8; padding: 20px; }
-        .container { max-width: 640px; margin: auto; background: #fff; border-radius: 12px; padding: 24px; }
-        h2 { color: #0b8457; }
-        p { font-size: 15px; color: #333; line-height: 1.6; }
-        ul { font-size: 15px; color: #444; }
-        .footer { margin-top: 20px; font-size: 13px; color: #777; }
-        a.btn {
-            display: inline-block; margin-top: 20px;
-            background: #0b8457; color: #fff; padding: 12px 18px;
-            text-decoration: none; border-radius: 8px;
-        }
+        body {{ font-family: Arial, sans-serif; background: #f4f6f8; padding: 20px; }}
+        .container {{ max-width: 640px; margin: auto; background: #fff; border-radius: 12px; padding: 24px; }}
+        h2 {{ color: #0b8457; }}
+        p {{ font-size: 15px; color: #333; line-height: 1.6; }}
+        ul {{ font-size: 15px; color: #444; }}
+        .footer {{ margin-top: 20px; font-size: 13px; color: #777; }}
       </style>
     </head>
     <body>
       <div class="container">
         <h2>Greetings from Hariom Industries</h2>
+        <p>{greeting}</p>
         <p>
           We are a Gujarat-based cotton ginning company, specializing in <b>Shankar-6 cotton bales</b> 
           and byproducts including cottonseed, cottonseed cake, lint waste, and seed oil.
@@ -69,35 +70,48 @@ def generate_email():
     return html
 
 
+# ---- File Upload ----
+uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
+
 # ---- Show Preview ----
 if uploaded_file:
-    st.subheader("📨 Email Preview (Generic)")
-    st.components.v1.html(generate_email(), height=700, scrolling=True)
+    df = pd.read_csv(uploaded_file)
+    st.subheader("📨 Email Preview (Generic Example)")
+    st.components.v1.html(generate_email("John", "ABC Textiles"), height=700, scrolling=True)
 
     # ---- Send Email Form ----
     sender_email = st.text_input("Enter your Gmail address")
     app_password = st.text_input("Enter your Gmail App Password", type="password")
 
-    if st.button("📩 Send Emails"):
+    if st.button("📩 Send Personalized Emails"):
         try:
-            df = pd.read_csv(uploaded_file)
-            recipients = df["Email"].dropna().tolist()
+            recipients = df.to_dict("records")
 
             server = smtplib.SMTP("smtp.gmail.com", 587)
             server.starttls()
             server.login(sender_email, app_password)
 
-            for recipient in recipients:
+            sent_count = 0
+            for rec in recipients:
+                email = rec.get("Email")
+                name = rec.get("Name")
+                company = rec.get("Company")
+
+                if pd.isna(email):
+                    continue
+
                 msg = MIMEMultipart("alternative")
                 msg["From"] = sender_email
-                msg["To"] = recipient
+                msg["To"] = email
                 msg["Subject"] = "Cotton Exports – Hariom Industries"
-                msg.attach(MIMEText(generate_email(), "html"))
+                msg.attach(MIMEText(generate_email(name, company), "html"))
 
-                server.sendmail(sender_email, recipient, msg.as_string())
+                server.sendmail(sender_email, email, msg.as_string())
+                sent_count += 1
 
             server.quit()
-            st.success(f"✅ Emails sent successfully to {len(recipients)} contacts!")
+            st.success(f"✅ Personalized emails sent successfully to {sent_count} contacts!")
 
         except Exception as e:
             st.error(f"❌ Error: {e}")
+
