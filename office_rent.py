@@ -1,121 +1,40 @@
 import streamlit as st
 import pandas as pd
-import yagmail
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 # ---- Page Config ----
-st.set_page_config(page_title="Hariom Industries Email Sender", page_icon="📩", layout="centered")
+st.set_page_config(page_title="Hariom Industries Email Tool", page_icon="📩", layout="centered")
 
-st.title("📩 Hariom Industries - Bulk Email Sender")
-st.write("Upload a CSV of agents/traders (with columns: `Name`, `Email`) and send branded emails directly.")
+st.title("📩 Hariom Industries - Email Tool")
+st.write("Upload a CSV of agents/traders (with columns: `Name`, `Email`) to send emails directly.")
 
-# ---- Gmail Login ----
-st.sidebar.header("🔑 Gmail Login")
-gmail_user = st.sidebar.text_input("Enter your Gmail address")
-gmail_pass = st.sidebar.text_input("Enter your Gmail App Password", type="password")
+# ---- Sidebar for Credentials ----
+st.sidebar.header("✉️ Email Account Settings")
+sender_email = st.sidebar.text_input("Your Gmail Address", placeholder="youremail@gmail.com")
+app_password = st.sidebar.text_input("App Password", type="password")
 
 # ---- File Upload ----
 uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
 
-# ---- Email Generator ----
+# ---- Email Template ----
 def generate_email(name):
     return f"""
     <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Hariom Industries – Export Email</title>
-      <style>
-        body {{
-          margin: 0;
-          padding: 0;
-          background: #f4f6f8;
-          font-family: Arial, Helvetica, sans-serif;
-        }}
-        .container {{
-          max-width: 640px;
-          margin: 20px auto;
-          background: #ffffff;
-          border-radius: 16px;
-          overflow: hidden;
-          box-shadow: 0 6px 24px rgba(0,0,0,0.08);
-        }}
-        .banner img {{
-          width: 100%;
-          height: auto;
-          display: block;
-        }}
-        .content {{
-          padding: 28px;
-        }}
-        p {{
-          margin: 8px 0;
-          font-size: 15px;
-          color: #555;
-          line-height: 1.6;
-        }}
-        .card {{
-          background: #fafafa;
-          border: 1px solid #ececec;
-          border-radius: 12px;
-          padding: 16px 18px;
-          margin-top: 20px;
-        }}
-        .card h3 {{
-          margin: 0 0 8px 0;
-          font-size: 18px;
-          color: #222;
-        }}
-        .card ul {{
-          margin: 8px 0;
-          padding-left: 20px;
-          font-size: 14px;
-          color: #333;
-        }}
-        .btn {{
-          display: inline-block;
-          text-decoration: none;
-          font-weight: 600;
-          padding: 12px 18px;
-          margin-top: 24px;
-          border-radius: 8px;
-          background: #0b8457;
-          color: #ffffff;
-        }}
-        hr {{
-          border: none;
-          height: 1px;
-          background: #eee;
-          margin: 24px 0;
-        }}
-        .footer {{
-          font-size: 12px;
-          color: #777;
-          padding: 0 28px 24px 28px;
-          line-height: 1.5;
-        }}
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="banner">
-          <img src="https://via.placeholder.com/1200x400.png?text=Hariom+Industries+Cotton+Exports" alt="Hariom Industries">
-        </div>
-        <div class="content">
-          <p>
-            Dear {name},
-          </p>
-          <p>
-            Greetings from <strong>Hariom Industries</strong>, a Gujarat-based cotton ginning company.  
-            We specialize in <strong>Shankar-6 cotton bales</strong> and byproducts including cottonseed, cottonseed cake, lint waste, and seed oil.
-          </p>
-          <p>
-            In addition to Shankar-6, we also process and supply <strong>Kalyan 797 cotton (variety 797)</strong>, ensuring diverse options to meet the specific needs of our buyers.
-          </p>
-          <div class="card">
-            <h3>What we can supply</h3>
+    <html>
+    <body style="font-family:Arial,Helvetica,sans-serif;background:#f4f6f8;padding:20px;">
+      <div style="max-width:640px;margin:auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+        <img src="https://via.placeholder.com/1200x400.png?text=Hariom+Industries+Cotton+Exports" style="width:100%;display:block;">
+        <div style="padding:24px;">
+          <p>Dear {name},</p>
+          <p>Greetings from <strong>Hariom Industries</strong>, a Gujarat-based cotton ginning company.  
+          We specialize in <strong>Shankar-6 cotton bales</strong> and byproducts including cottonseed, cottonseed cake, lint waste, and seed oil.</p>
+          <p>In addition to Shankar-6, we also process and supply <strong>Kalyan 797 cotton (variety 797)</strong>, ensuring diverse options to meet the specific needs of our buyers.</p>
+          <div style="background:#fafafa;padding:16px;border-radius:8px;margin-top:16px;">
+            <h3 style="margin:0 0 8px 0;">What we can supply</h3>
             <ul>
-              <li>Shankar-6 Cotton Bales – press-packed, contamination-controlled</li>
+              <li>Shankar-6 Cotton Bales – contamination-controlled</li>
               <li>Kalyan 797 Cotton – widely used in local & export markets</li>
               <li>Cottonseed – suitable for oil extraction</li>
               <li>Cottonseed Cake – protein-rich cattle feed</li>
@@ -123,40 +42,64 @@ def generate_email(name):
             </ul>
           </div>
           <a href="mailto:hariomindustries5559@gmail.com?subject=Request%20for%20Cotton%20Specs%20and%20Prices&body=Hello%20Hariom%20Industries%2C%0D%0A%0D%0AI%20am%20interested%20in%20your%20cotton%20products.%20Please%20share%20detailed%20specifications%20and%20pricing.%0D%0A%0D%0ACompany%20Name%3A%20%5BEnter%20Here%5D%0D%0AContact%20Person%3A%20%5BEnter%20Here%5D%0D%0AContact%20Number%3A%20%5BEnter%20Here%5D%0D%0A%0D%0ARegards%2C" 
-             class="btn">Request Specs & Prices</a>
-          <hr>
-          <div class="footer">
-            Hariom Industries • Gujarat, India<br>
-            hariomindustries5559@gmail.com
-          </div>
+             style="display:inline-block;margin-top:20px;padding:12px 20px;background:#0b8457;color:#fff;border-radius:6px;text-decoration:none;">
+             Request Specs & Prices</a>
+          <hr style="margin:24px 0;border:none;height:1px;background:#eee;">
+          <p style="font-size:12px;color:#555;">Hariom Industries • Gujarat, India<br>
+          📧 hariomindustries5559@gmail.com</p>
         </div>
       </div>
     </body>
     </html>
     """
 
-# ---- Send Emails ----
-if uploaded_file and gmail_user and gmail_pass:
+# ---- Sending Emails ----
+def send_email(to_email, subject, html_content):
+    msg = MIMEMultipart("alternative")
+    msg["From"] = sender_email
+    msg["To"] = to_email
+    msg["Subject"] = subject
+
+    # Attach HTML
+    msg.attach(MIMEText(html_content, "html"))
+
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(sender_email, app_password)
+            server.sendmail(sender_email, to_email, msg.as_string())
+        return True
+    except Exception as e:
+        return str(e)
+
+# ---- Main Logic ----
+if uploaded_file:
     df = pd.read_csv(uploaded_file)
     st.success(f"CSV Loaded: {len(df)} contacts found ✅")
     st.dataframe(df.head())
 
-    if st.button("🚀 Send Emails Now"):
-        try:
-            yag = yagmail.SMTP(gmail_user, gmail_pass)
-            sent_count = 0
-            for _, row in df.iterrows():
-                name = row["Name"]
-                email = row["Email"]
-                html_content = generate_email(name)
-                yag.send(
-                    to=email,
-                    subject="High-Quality Cotton Bales & Byproducts from Hariom Industries",
-                    contents=html_content,
-                )
-                sent_count += 1
-            st.success(f"✅ Successfully sent {sent_count} emails!")
-        except Exception as e:
-            st.error(f"❌ Error: {e}")
-else:
-    st.info("👉 Please log in with Gmail and upload a CSV file to enable sending.")
+    for idx, row in df.iterrows():
+        name = row["Name"]
+        email = row["Email"]
+        st.markdown(f"### ✉️ Preview for **{name}** ({email})")
+        st.components.v1.html(generate_email(name), height=600, scrolling=True)
+
+    if sender_email and app_password:
+        if st.button("🚀 Send Emails"):
+            progress = st.progress(0)
+            success_count = 0
+            errors = []
+            for i, row in df.iterrows():
+                name, email = row["Name"], row["Email"]
+                html_body = generate_email(name)
+                result = send_email(email, "Cotton Products – Hariom Industries", html_body)
+                if result is True:
+                    success_count += 1
+                else:
+                    errors.append((email, result))
+                progress.progress((i + 1) / len(df))
+            st.success(f"✅ Sent {success_count} / {len(df)} emails successfully!")
+            if errors:
+                st.error("Some emails failed:")
+                st.write(errors)
+    else:
+        st.warning("⚠️ Enter your Gmail and App Password in the sidebar to enable sending.")
