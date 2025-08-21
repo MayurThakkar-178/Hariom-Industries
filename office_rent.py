@@ -41,9 +41,11 @@ def generate_email(name):
               <li>Lint / Cotton Waste – for open-end spinning & recycling</li>
             </ul>
           </div>
-          <a href="mailto:hariomindustries5559@gmail.com?subject=Request%20for%20Cotton%20Specs%20and%20Prices&body=Hello%20Hariom%20Industries%2C%0D%0A%0D%0AI%20am%20interested%20in%20your%20cotton%20products.%20Please%20share%20detailed%20specifications%20and%20pricing.%0D%0A%0D%0ACompany%20Name%3A%20%5BEnter%20Here%5D%0D%0AContact%20Person%3A%20%5BEnter%20Here%5D%0D%0AContact%20Number%3A%20%5BEnter%20Here%5D%0D%0A%0D%0ARegards%2C" 
-             style="display:inline-block;margin-top:20px;padding:12px 20px;background:#0b8457;color:#fff;border-radius:6px;text-decoration:none;">
-             Request Specs & Prices</a>
+          <a href="mailto:hariomindustries5559@gmail.com?subject=Request%20for%20Cotton%20Specs%20and%20Prices&body=Hello%20Hariom%20Industries,%0D%0A%0D%0AI%20am%20interested%20in%20your%20cotton%20products.%20Please%20share%20detailed%20specifications%20and%20pricing.%0D%0A%0D%0AProducts%20Interested:%0D%0A[ ]%20Shankar-6%20Cotton%20Bales%0D%0A[ ]%20Kalyan%20797%20Cotton%0D%0A[ ]%20Cottonseed%0D%0A[ ]%20Cottonseed%20Cake%0D%0A[ ]%20Lint%20/%20Cotton%20Waste%0D%0A%0D%0ACompany%20Name:%20[Enter%20Here]%0D%0AContact%20Person:%20[Enter%20Here]%0D%0AContact%20Number:%20[Enter%20Here]%0D%0A%0D%0ARegards,%0D%0A" 
+   style="display:inline-block;margin-top:20px;padding:12px 20px;background:#0b8457;color:#fff;border-radius:6px;text-decoration:none;">
+   Request Specs & Prices
+</a>
+
           <hr style="margin:24px 0;border:none;height:1px;background:#eee;">
           <p style="font-size:12px;color:#555;">Hariom Industries • Gujarat, India<br>
           📧 hariomindustries5559@gmail.com</p>
