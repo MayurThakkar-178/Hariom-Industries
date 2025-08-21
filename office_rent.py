@@ -1,28 +1,21 @@
 import streamlit as st
 import pandas as pd
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+import base64
+import os
+from pathlib import Path
+from zipfile import ZipFile
 
 # ---- Page Config ----
 st.set_page_config(page_title="Hariom Industries Email Tool", page_icon="📩", layout="centered")
 
-st.title("📩 Hariom Industries - Email Campaign Tool")
+st.title("📩 Hariom Industries - Email Template Generator")
+st.write("Upload a CSV of agents/traders (with columns: `Name`, `Email`) to generate emails.")
 
 # ---- File Upload ----
-uploaded_file = st.file_uploader("Upload CSV (Name, Email)", type=["csv"])
+uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
 
-# ---- SMTP Settings ----
-st.sidebar.header("📬 SMTP Settings")
-smtp_host = st.sidebar.text_input("SMTP Server", "smtp.gmail.com")
-smtp_port = st.sidebar.number_input("Port", 587)
-smtp_user = st.sidebar.text_input("Your Email Address")
-smtp_pass = st.sidebar.text_input("App Password", type="password")
-subject = st.sidebar.text_input("Email Subject", "Cotton Supply from Hariom Industries")
-
-# ---- HTML Template ----
 def generate_email(name, email):
-    return f"""
+    html = f"""
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -31,7 +24,8 @@ def generate_email(name, email):
       <title>Hariom Industries – Export Email</title>
       <style>
         body {{
-          margin: 0; padding: 0;
+          margin: 0;
+          padding: 0;
           background: #f4f6f8;
           font-family: Arial, Helvetica, sans-serif;
         }}
@@ -48,8 +42,15 @@ def generate_email(name, email):
           height: auto;
           display: block;
         }}
-        .content {{ padding: 28px; }}
-        p {{ margin: 8px 0; font-size: 15px; color: #555; line-height: 1.6; }}
+        .content {{
+          padding: 28px;
+        }}
+        p {{
+          margin: 8px 0;
+          font-size: 15px;
+          color: #555;
+          line-height: 1.6;
+        }}
         .card {{
           background: #fafafa;
           border: 1px solid #ececec;
@@ -57,8 +58,17 @@ def generate_email(name, email):
           padding: 16px 18px;
           margin-top: 20px;
         }}
-        .card h3 {{ margin: 0 0 8px 0; font-size: 18px; color: #222; }}
-        .card ul {{ margin: 8px 0; padding-left: 20px; font-size: 14px; color: #333; }}
+        .card h3 {{
+          margin: 0 0 8px 0;
+          font-size: 18px;
+          color: #222;
+        }}
+        .card ul {{
+          margin: 8px 0;
+          padding-left: 20px;
+          font-size: 14px;
+          color: #333;
+        }}
         .btn {{
           display: inline-block;
           text-decoration: none;
@@ -69,8 +79,18 @@ def generate_email(name, email):
           background: #0b8457;
           color: #ffffff;
         }}
-        hr {{ border: none; height: 1px; background: #eee; margin: 24px 0; }}
-        .footer {{ font-size: 12px; color: #777; padding: 0 28px 24px 28px; line-height: 1.5; }}
+        hr {{
+          border: none;
+          height: 1px;
+          background: #eee;
+          margin: 24px 0;
+        }}
+        .footer {{
+          font-size: 12px;
+          color: #777;
+          padding: 0 28px 24px 28px;
+          line-height: 1.5;
+        }}
       </style>
     </head>
     <body>
@@ -79,7 +99,9 @@ def generate_email(name, email):
           <img src="https://via.placeholder.com/1200x400.png?text=Hariom+Industries+Cotton+Exports" alt="Hariom Industries">
         </div>
         <div class="content">
-          <p>Dear {name},</p>
+          <p>
+            Dear {name},
+          </p>
           <p>
             Greetings from <strong>Hariom Industries</strong>, a Gujarat-based cotton ginning company.  
             We specialize in <strong>Shankar-6 cotton bales</strong> and byproducts including cottonseed, cottonseed cake, lint waste, and seed oil.
@@ -109,60 +131,39 @@ def generate_email(name, email):
     </body>
     </html>
     """
+    return html
 
-# ---- Send Function ----
-def send_email(to_email, to_name):
-    try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"] = smtp_user
-        msg["To"] = to_email
-
-        html_content = generate_email(to_name, to_email)
-        msg.attach(MIMEText(html_content, "html"))
-
-        with smtplib.SMTP(smtp_host, smtp_port) as server:
-            server.starttls()
-            server.login(smtp_user, smtp_pass)
-            server.sendmail(smtp_user, to_email, msg.as_string())
-
-        return True
-    except Exception as e:
-        return str(e)
-
-# ---- Workflow ----
-if uploaded_file is not None:
+if uploaded_file:
     df = pd.read_csv(uploaded_file)
-    st.success(f"✅ {len(df)} contacts loaded")
+    st.success(f"CSV Loaded: {len(df)} contacts found ✅")
+    st.dataframe(df.head())
 
-    # Preview first email
-    preview_name = df.iloc[0]["Name"]
-    preview_email = df.iloc[0]["Email"]
-    st.subheader("📌 Preview Email")
-    st.components.v1.html(generate_email(preview_name, preview_email), height=800, scrolling=True)
+    previews = []
+    output_dir = Path("emails_output")
+    output_dir.mkdir(exist_ok=True)
 
-    # Send Test
-    if st.button("📤 Send Test Email (to yourself)"):
-        if smtp_user and smtp_pass:
-            status = send_email(smtp_user, "Test User")
-            if status is True:
-                st.success("✅ Test email sent successfully")
-            else:
-                st.error(f"❌ Failed: {status}")
-        else:
-            st.warning("⚠️ Enter SMTP credentials in the sidebar")
+    for idx, row in df.iterrows():
+        name = row["Name"]
+        email = row["Email"]
+        html_content = generate_email(name, email)
 
-    # Bulk Send
-    if st.button("🚀 Send Bulk Emails"):
-        if smtp_user and smtp_pass:
-            success, failed = 0, 0
-            for _, row in df.iterrows():
-                res = send_email(row["Email"], row["Name"])
-                if res is True:
-                    success += 1
-                else:
-                    failed += 1
-                    st.error(f"Failed for {row['Email']}: {res}")
-            st.success(f"✅ Bulk sending complete. Sent: {success}, Failed: {failed}")
-        else:
-            st.warning("⚠️ Enter SMTP credentials in the sidebar")
+        # Save to individual file
+        file_path = output_dir / f"{name}_{email}.html"
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(html_content)
+
+        previews.append((name, email, html_content))
+
+    # ---- Show Preview of First Contact ----
+    first_preview = previews[0]
+    st.markdown(f"### ✉️ Email Preview for **{first_preview[0]}** ({first_preview[1]})")
+    st.components.v1.html(first_preview[2], height=800, scrolling=True)
+
+    # ---- Zip Download Option ----
+    zip_path = "hariom_emails.zip"
+    with ZipFile(zip_path, 'w') as zipf:
+        for f in output_dir.glob("*.html"):
+            zipf.write(f, f.name)
+
+    with open(zip_path, "rb") as f:
+        st.download_button("⬇️ Download All Emails (ZIP)", f, file_name="hariom_emails.zip")
