@@ -1,21 +1,24 @@
 import streamlit as st
 import pandas as pd
-import base64
-import os
-from pathlib import Path
-from zipfile import ZipFile
+import yagmail
 
 # ---- Page Config ----
-st.set_page_config(page_title="Hariom Industries Email Tool", page_icon="📩", layout="centered")
+st.set_page_config(page_title="Hariom Industries Email Sender", page_icon="📩", layout="centered")
 
-st.title("📩 Hariom Industries - Email Template Generator")
-st.write("Upload a CSV of agents/traders (with columns: `Name`, `Email`) to generate emails.")
+st.title("📩 Hariom Industries - Bulk Email Sender")
+st.write("Upload a CSV of agents/traders (with columns: `Name`, `Email`) and send branded emails directly.")
+
+# ---- Gmail Login ----
+st.sidebar.header("🔑 Gmail Login")
+gmail_user = st.sidebar.text_input("Enter your Gmail address")
+gmail_pass = st.sidebar.text_input("Enter your Gmail App Password", type="password")
 
 # ---- File Upload ----
 uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
 
-def generate_email(name, email):
-    html = f"""
+# ---- Email Generator ----
+def generate_email(name):
+    return f"""
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -124,46 +127,36 @@ def generate_email(name, email):
           <hr>
           <div class="footer">
             Hariom Industries • Gujarat, India<br>
-            +91-XXXXXXXXXX • hariomindustries5559@gmail.com
+            hariomindustries5559@gmail.com
           </div>
         </div>
       </div>
     </body>
     </html>
     """
-    return html
 
-if uploaded_file:
+# ---- Send Emails ----
+if uploaded_file and gmail_user and gmail_pass:
     df = pd.read_csv(uploaded_file)
     st.success(f"CSV Loaded: {len(df)} contacts found ✅")
     st.dataframe(df.head())
 
-    previews = []
-    output_dir = Path("emails_output")
-    output_dir.mkdir(exist_ok=True)
-
-    for idx, row in df.iterrows():
-        name = row["Name"]
-        email = row["Email"]
-        html_content = generate_email(name, email)
-
-        # Save to individual file
-        file_path = output_dir / f"{name}_{email}.html"
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(html_content)
-
-        previews.append((name, email, html_content))
-
-    # ---- Show Preview of First Contact ----
-    first_preview = previews[0]
-    st.markdown(f"### ✉️ Email Preview for **{first_preview[0]}** ({first_preview[1]})")
-    st.components.v1.html(first_preview[2], height=800, scrolling=True)
-
-    # ---- Zip Download Option ----
-    zip_path = "hariom_emails.zip"
-    with ZipFile(zip_path, 'w') as zipf:
-        for f in output_dir.glob("*.html"):
-            zipf.write(f, f.name)
-
-    with open(zip_path, "rb") as f:
-        st.download_button("⬇️ Download All Emails (ZIP)", f, file_name="hariom_emails.zip")
+    if st.button("🚀 Send Emails Now"):
+        try:
+            yag = yagmail.SMTP(gmail_user, gmail_pass)
+            sent_count = 0
+            for _, row in df.iterrows():
+                name = row["Name"]
+                email = row["Email"]
+                html_content = generate_email(name)
+                yag.send(
+                    to=email,
+                    subject="High-Quality Cotton Bales & Byproducts from Hariom Industries",
+                    contents=html_content,
+                )
+                sent_count += 1
+            st.success(f"✅ Successfully sent {sent_count} emails!")
+        except Exception as e:
+            st.error(f"❌ Error: {e}")
+else:
+    st.info("👉 Please log in with Gmail and upload a CSV file to enable sending.")
