@@ -54,20 +54,10 @@ def generate_email():
           <li>Cottonseed Cake</li>
           <li>Lint / Cotton Waste</li>
         </ul>
-        <p><b>Reply Format:</b></p>
-        <pre style="background:#f4f6f8;padding:12px;border-radius:6px;">
-Hello Hariom Industries,
-
-I am interested in your cotton products. Please share detailed specifications and pricing.
-
-Company Name: [Enter Here]
-Contact Person: [Enter Here]
-Contact Number: [Enter Here]
-
-Products Interested: [Tick from list above]
-
-Regards,
-        </pre>
+        <a href="mailto:hariomindustries5559@gmail.com?subject=Request%20for%20Cotton%20Specs%20and%20Prices&body=Hello%20Hariom%20Industries,%0D%0A%0D%0AI%20am%20interested%20in%20your%20cotton%20products.%20Please%20share%20detailed%20specifications%20and%20pricing.%0D%0A%0D%0AProducts%20Interested:%0D%0A[ ]%20Shankar-6%20Cotton%20Bales%0D%0A[ ]%20Kalyan%20797%20Cotton%0D%0A[ ]%20Cottonseed%0D%0A[ ]%20Cottonseed%20Cake%0D%0A[ ]%20Lint%20/%20Cotton%20Waste%0D%0A%0D%0ACompany%20Name:%20[Enter%20Here]%0D%0AContact%20Person:%20[Enter%20Here]%0D%0AContact%20Number:%20[Enter%20Here]%0D%0A%0D%0ARegards,%0D%0A" 
+   style="display:inline-block;margin-top:20px;padding:12px 20px;background:#0b8457;color:#fff;border-radius:6px;text-decoration:none;">
+   Request Specs & Prices
+</a>
         <div class="footer">
           Hariom Industries • Gujarat, India<br>
           📩 hariomindustries5559@gmail.com
