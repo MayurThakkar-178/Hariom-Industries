@@ -1,130 +1,88 @@
-import streamlit as st
-import pandas as pd
 import smtplib
+import pandas as pd
+import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-# ---- Page Config ----
-st.set_page_config(page_title="Hariom Industries Email Tool", page_icon="📩", layout="centered")
+# ---- Load CSV ----
+# CSV must have columns: Unit Name, Email
+data = pd.read_csv("cotton_mills.csv")
 
-st.title("📩 Hariom Industries - Bulk Email Sender")
-st.write("Upload a CSV with columns: `Email`, `Name`, `Company` to send personalized outreach emails.")
+# ---- Gmail Credentials ----
+sender_email = "Hariomindustries5559@gmail.com"
+password = "your_app_password_here"  # Use Gmail App Password
 
-# ---- Email Template (Personalized) ----
-def generate_email(name=None, company=None):
-    greeting = "Hello"
-    if name and company:
-        greeting = f"Hello {name} from {company},"
-    elif name:
-        greeting = f"Hello {name},"
-    elif company:
-        greeting = f"Hello team at {company},"
+# ---- SMTP Setup ----
+smtp_server = "smtp.gmail.com"
+port = 587
 
-    html = f"""
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <title>Hariom Industries – Cotton Exports</title>
-      <style>
-        body {{ font-family: Arial, sans-serif; background: #f4f6f8; padding: 20px; }}
-        .container {{ max-width: 640px; margin: auto; background: #fff; border-radius: 12px; padding: 24px; }}
-        h2 {{ color: #0b8457; }}
-        p {{ font-size: 15px; color: #333; line-height: 1.6; }}
-        ul {{ font-size: 15px; color: #444; }}
-        .footer {{ margin-top: 20px; font-size: 13px; color: #777; }}
-        .btn {{
-            display: inline-block; margin-top: 20px;
-            background: #0b8457; color: #fff; padding: 12px 18px;
-            text-decoration: none; border-radius: 8px;
-        }}
-        strong {{ color: #0b8457; }}
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <h2>Greetings from Hariom Industries</h2>
-        <p>{greeting}</p>
-        <p>
-          We are a Gujarat-based cotton ginning company, specializing in <b>Shankar-6 cotton bales</b> 
-          and byproducts including cottonseed, cottonseed cake, lint waste, and seed oil.
-        </p>
-        <p>
-          In addition to Shankar-6, we also process and supply <b>Kalyan 797 cotton (variety 797)</b>, 
-          ensuring diverse options to meet the specific needs of our buyers.
-        </p>
-        <p><b>Products Available:</b></p>
-        <ul>
-          <li>Shankar-6 Cotton Bales</li>
-          <li>Kalyan 797 Cotton</li>
-          <li>Cottonseed</li>
-          <li>Cottonseed Cake</li>
-          <li>Lint / Cotton Waste</li>
-        </ul>
-        <p>
-          We would be glad to connect further to discuss details about cotton exports, 
-          and would love to work with you.
-        </p>
-        <p><strong>
-        This email is purely for business inquiry purposes and is sent in accordance with the IT Act, 2000. This is not spam.
-        </strong></p>
+# ---- Email Body Template ----
+def generate_email(unit_name):
+    body = f"""
+Subject: Introduction & Proposal for Cotton Supply Collaboration
 
-        <!-- Request Specs & Prices Button -->
-        <a href="mailto:hariomindustries5559@gmail.com?subject=Request%20for%20Cotton%20Specs%20and%20Prices&body=Hello%20Hariom%20Industries,%0D%0A%0D%0AI%20am%20interested%20in%20your%20cotton%20products.%20Please%20share%20detailed%20specifications%20and%20pricing.%0D%0A%0D%0ACompany%20Name:%20[Enter%20Here]%0D%0AContact%20Person:%20[Enter%20Here]%0D%0AContact%20Number:%20[Enter%20Here]%0D%0A%0D%0AProducts%20Interested:%20[Tick%20from%20list]%0D%0A%0D%0ARegards," 
-        class="btn">Request Specs & Prices</a>
+Respected Sir/Madam,
 
-        <div class="footer">
-          Hariom Industries • Gujarat, India<br>
-          📩 hariomindustries5559@gmail.com
-        </div>
-      </div>
-    </body>
-    </html>
-    """
-    return html
+I am Mayur Thakkar from Hariom Industries, Harij, Dist. Patan, Gujarat – 384240.
+We specialize in supplying cotton bales and cotton seed with strict quality standards,
+serving both domestic and international markets.
 
-# ---- File Upload ----
-uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
+Our cotton bales are processed and packed to ensure consistency in fiber quality for spinning mills,
+while our cotton seed is clean and graded for oil extraction and allied uses.
+We take pride in maintaining transparent processes, reliable supply, and building long-term partnerships
+through trust, fair pricing, and timely delivery.
 
-# ---- Show Preview ----
-if uploaded_file:
-    df = pd.read_csv(uploaded_file)
-    st.subheader("📨 Email Preview (Generic Example)")
-    st.components.v1.html(generate_email("John", "ABC Textiles"), height=700, scrolling=True)
+If you would like to connect with us, please reach out at the email address below
+with your requirement details. We will be glad to share specifications, pricing,
+and supply terms tailored to your needs.
 
-    # ---- Send Email Form ----
-    sender_email = st.text_input("Enter your Gmail address")
-    app_password = st.text_input("Enter your Gmail App Password", type="password")
+Sincerely,
+Hariom Industries
+Harij, Dist. Patan, Gujarat – 384240
+📩 Hariomindustries5559@gmail.com
 
-    if st.button("📩 Send Personalized Emails"):
-        try:
-            recipients = df.to_dict("records")
+------------------------------------------------------------
+Important Note:
+This email is being sent to you from available mail IDs across the Internet
+for business inquiry purposes. If you would like to UNSUBSCRIBE,
+please reply to this mail with the word UNSUBSCRIBE.
+------------------------------------------------------------
+"""
+    return body
 
-            server = smtplib.SMTP("smtp.gmail.com", 587)
-            server.starttls()
-            server.login(sender_email, app_password)
+# ---- Batching System ----
+BATCH_SIZE = 50   # send 50 emails at a time
+DELAY = 120       # wait 120 seconds between batches (adjust as needed)
 
-            sent_count = 0
-            for rec in recipients:
-                email = rec.get("Email")
-                name = rec.get("Name")
-                company = rec.get("Company")
+# ---- Send Emails ----
+server = smtplib.SMTP(smtp_server, port)
+server.starttls()
+server.login(sender_email, password)
 
-                if pd.isna(email):
-                    continue
+recipients = data.to_dict("records")
+sent_count = 0
 
-                msg = MIMEMultipart("alternative")
-                msg["From"] = sender_email
-                msg["To"] = email
-                msg["Subject"] = "Cotton Exports – Hariom Industries"
-                msg.attach(MIMEText(generate_email(name, company), "html"))
+for i, rec in enumerate(recipients, start=1):
+    unit_name = rec.get("Unit Name", "your esteemed organization")
+    email = rec.get("Email")
 
-                server.sendmail(sender_email, email, msg.as_string())
-                sent_count += 1
+    if pd.isna(email):
+        continue
 
-            server.quit()
-            st.success(f"✅ Personalized emails sent successfully to {sent_count} contacts!")
+    msg = MIMEMultipart()
+    msg["From"] = sender_email
+    msg["To"] = email
+    msg["Subject"] = "Introduction – Hariom Industries"
+    msg.attach(MIMEText(generate_email(unit_name), "plain"))
 
-        except Exception as e:
-            st.error(f"❌ Error: {e}")
+    server.sendmail(sender_email, email, msg.as_string())
+    sent_count += 1
+    print(f"✅ Sent to {unit_name} ({email})")
 
+    # batching pause
+    if i % BATCH_SIZE == 0:
+        print(f"⏸ Pausing for {DELAY} seconds after {BATCH_SIZE} emails...")
+        time.sleep(DELAY)
+
+server.quit()
+print(f"🎉 Finished sending {sent_count} emails.")
