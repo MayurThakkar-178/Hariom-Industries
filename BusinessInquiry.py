@@ -9,10 +9,14 @@ from datetime import datetime
 # ---- Streamlit UI ----
 st.title("Hariom Industries Bulk Email Sender")
 
-uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
+uploaded_file = st.file_uploader("Upload your CSV file", type=["csv","xlsx"])
 
 if uploaded_file is not None:
-    data = pd.read_csv(uploaded_file)
+    # Detect file type and read accordingly
+    if uploaded_file.name.endswith(".csv"):
+        data = pd.read_csv(uploaded_file)
+    elif uploaded_file.name.endswith(".xlsx"):
+        data = pd.read_excel(uploaded_file)
 
     # ---- Gmail Credentials ----
     sender_email = st.text_input("Sender Email")
