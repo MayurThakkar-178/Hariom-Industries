@@ -3,6 +3,7 @@ import pandas as pd
 import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from datetime import datetime
 
 # ---- Load CSV ----
 # CSV must have columns: Unit Name, Email
@@ -19,8 +20,6 @@ port = 587
 # ---- Email Body Template ----
 def generate_email(unit_name):
     body = f"""
-Subject: Introduction & Proposal for Cotton Supply Collaboration
-
 Respected Sir/Madam,
 
 I am Mayur Thakkar from Hariom Industries, Harij, Dist. Patan, Gujarat – 384240.
@@ -51,8 +50,8 @@ please reply to this mail with the word UNSUBSCRIBE.
     return body
 
 # ---- Batching System ----
-BATCH_SIZE = 50   # send 50 emails at a time
-DELAY = 120       # wait 120 seconds between batches (adjust as needed)
+BATCH_SIZE = 30   # safer batch size
+DELAY = 180       # wait 3 minutes between batches
 
 # ---- Send Emails ----
 server = smtplib.SMTP(smtp_server, port)
@@ -61,6 +60,7 @@ server.login(sender_email, password)
 
 recipients = data.to_dict("records")
 sent_count = 0
+log_entries = []
 
 for i, rec in enumerate(recipients, start=1):
     unit_name = rec.get("Unit Name", "your esteemed organization")
@@ -75,9 +75,22 @@ for i, rec in enumerate(recipients, start=1):
     msg["Subject"] = "Introduction – Hariom Industries"
     msg.attach(MIMEText(generate_email(unit_name), "plain"))
 
-    server.sendmail(sender_email, email, msg.as_string())
-    sent_count += 1
-    print(f"✅ Sent to {unit_name} ({email})")
+    try:
+        server.sendmail(sender_email, email, msg.as_string())
+        sent_count += 1
+        print(f"✅ Sent to {unit_name} ({email})")
+        status = "Sent"
+    except Exception as e:
+        print(f"❌ Failed to send to {unit_name} ({email}): {e}")
+        status = f"Failed: {e}"
+
+    # log entry
+    log_entries.append({
+        "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "Unit Name": unit_name,
+        "Email": email,
+        "Status": status
+    })
 
     # batching pause
     if i % BATCH_SIZE == 0:
@@ -86,3 +99,8 @@ for i, rec in enumerate(recipients, start=1):
 
 server.quit()
 print(f"🎉 Finished sending {sent_count} emails.")
+
+# ---- Save Log ----
+log_df = pd.DataFrame(log_entries)
+log_df.to_csv("sent_log.csv", index=False)
+print("📝 Log saved to sent_log.csv")
