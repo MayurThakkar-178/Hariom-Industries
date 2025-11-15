@@ -201,8 +201,6 @@ if uploaded_file is not None:
         recipients = data.to_dict("records")
         total = len(recipients)
         sent_count = 0
-
-        progress = st.progress(0)
         logs = []
 
         for i, rec in enumerate(recipients, start=1):
@@ -231,11 +229,14 @@ if uploaded_file is not None:
                 "Status": status
             })
 
-            progress.progress(i/total)
 
             if i % BATCH_SIZE == 0:
-                st.warning(f"⏸ Waiting {DELAY}s before next batch...")
-                time.sleep(DELAY)
+                st.warning(f"⏸ Waiting {DELAY} seconds before next batch...")
+                timer_placeholder = st.empty()
+                for remaining in range(DELAY, 0, -1):
+                    timer_placeholder.info(f"⌛ Next batch in {remaining} seconds...")
+                    time.sleep(1)
+                    timer_placeholder.empty()
 
         server.quit()
 
