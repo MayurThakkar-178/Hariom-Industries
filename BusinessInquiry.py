@@ -5,7 +5,14 @@ import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from datetime import datetime
+import importlib.util
+import streamlit as st
 
+if importlib.util.find_spec("openpyxl") is None:
+    st.error("❌ openpyxl is NOT installed in this environment")
+else:
+    st.success("✅ openpyxl is installed and ready")
+    
 # ---- Streamlit UI ----
 st.title("Hariom Industries Bulk Email Sender")
 
