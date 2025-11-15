@@ -40,7 +40,7 @@ st.markdown("""
 # ----------------------------
 #        APP BANNER
 # ----------------------------
-st.image("banner.png", use_column_width=True)
+st.image("Hariom.png", use_column_width=True)
 
 # ----------------------------
 #        TITLE
@@ -131,7 +131,7 @@ def build_email(unit_name, sender_email, receiver_email):
     msg.attach(MIMEText(html, "html"))
 
     # ---------- INLINE BANNER ATTACHMENT ----------
-    with open("banner.png", "rb") as f:
+    with open("Hariom.png", "rb") as f:
         img = MIMEImage(f.read())
         img.add_header("Content-ID", "<banner_image>")
         img.add_header("Content-Disposition", "inline", filename="banner.png")
