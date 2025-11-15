@@ -60,7 +60,7 @@ st.markdown("""
 # ----------------------------
 #        BANNER IMAGE
 # ----------------------------
-st.image("banner.png", use_column_width=True)
+st.image("Hariom.png", use_column_width=True)
 
 # ----------------------------
 #        TITLE SECTION
