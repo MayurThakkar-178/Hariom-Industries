@@ -60,9 +60,8 @@ else:
 # ----------------------------
 #  FILE UPLOADER
 # ----------------------------
-st.markdown('</div>', unsafe_allow_html=True)
+
 uploaded_file = st.file_uploader("📤 Upload CSV or XLSX with Unit Name & Email", type=["csv", "xlsx"])
-st.markdown('</div>', unsafe_allow_html=True)
 
 # ==============================================================
 #       INLINE BANNER EMAIL BUILDER (CID EMBED)
@@ -191,7 +190,7 @@ if uploaded_file is not None:
     st.markdown('<div class="card">', unsafe_allow_html=True)
 
     if st.button("🚀 Start Sending Emails"):
-
+        timer_placeholder = st.empty()
         smtp_server = "smtp.gmail.com"
         port = 587
         server = smtplib.SMTP(smtp_server, port)
