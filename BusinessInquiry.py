@@ -21,10 +21,6 @@ st.markdown("""
     .subtitle {
         text-align: center; font-size: 16px; color: #424242; margin-bottom: 25px;
     }
-    .card {
-        background: white; padding: 20px; border-radius: 15px;
-        box-shadow: 0px 4px 12px rgba(0,0,0,0.1); margin-bottom: 25px;
-    }
     .stButton>button {
         background-color: #1e88e5; color: white; width: 100%; border-radius: 10px;
         height: 50px; font-size: 18px;
