@@ -60,7 +60,7 @@ else:
 # ----------------------------
 #  FILE UPLOADER
 # ----------------------------
-st.markdown('<div class="card">', unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
 uploaded_file = st.file_uploader("📤 Upload CSV or XLSX with Unit Name & Email", type=["csv", "xlsx"])
 st.markdown('</div>', unsafe_allow_html=True)
 
@@ -232,7 +232,6 @@ if uploaded_file is not None:
 
             if i % BATCH_SIZE == 0:
                 st.warning(f"⏸ Waiting {DELAY} seconds before next batch...")
-                timer_placeholder = st.empty()
                 for remaining in range(DELAY, 0, -1):
                     timer_placeholder.info(f"⌛ Next batch in {remaining} seconds...")
                     time.sleep(1)
